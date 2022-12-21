@@ -24,7 +24,7 @@ class AddPassesesHandler: NSObject, PKAddPassesViewControllerDelegate {
 @objc(BraintreePlugin)
 public class BraintreePlugin: CAPPlugin {
     var token: String!
-    var dataCollector: BTDataCollector!
+//    var dataCollector: BTDataCollector!
     var braintreeClient: BTAPIClient!
     var applePayController: PKPaymentAuthorizationViewController!
     var merchantName: String!
@@ -45,110 +45,10 @@ public class BraintreePlugin: CAPPlugin {
             return
         }
 
-        self.dataCollector.setFraudMerchantId(metchantId)
-        self.dataCollector.collectCardFraudData() { deviceData in
-            call.resolve([deviceData: deviceData])
-        }
-    }
-
-    public func addPassesViewControllerDidFinish(_ controller: PKAddPassesViewController) {
-        self.call.resolve();
-    }
-
-    func downloadFile(url_download : String, userCompletionHandler: @escaping (URL?, Error?) -> Void) {
-        // Create URL
-
-        let url = URL(string: url_download)
-
-        guard let requestUrl = url else { fatalError() }
-
-        // Create URL Request
-        let request = URLRequest(url: requestUrl)
-        let downloadTask = URLSession.shared.downloadTask(with: request) {
-            urlOrNil, responseOrNil, errorOrNil in
-            // check for and handle errors:
-
-            // * errorOrNil should be nil
-
-            // * responseOrNil should be an HTTPURLResponse with statusCode in 200..<299
-            guard let fileURL = urlOrNil else { return }
-
-            do {
-
-                let documentsURL = try
-
-                    FileManager.default.url(for: .documentDirectory,
-
-                                            in: .userDomainMask,
-
-                                            appropriateFor: nil,
-
-                                            create: false)
-
-                let savedURL = documentsURL.appendingPathComponent(fileURL.lastPathComponent)
-
-                try FileManager.default.moveItem(at: fileURL, to: savedURL)
-
-                userCompletionHandler(savedURL,nil)
-            } catch {
-                userCompletionHandler(nil,error)
-            }
-
-        }
-
-        downloadTask.resume()
-
-    }
-
-    @objc func getTickets(_ call: CAPPluginCall) {
-
-        self.call = call
-        call.keepAlive = true
-        
-        let download_path = call.getString("download") ?? "";
-        if (download_path.isEmpty) {
-            call.reject("Download URL is empty")
-            return
-        }
-//        download_path = "https://raileasyapi.apidev.trainsplit.com/api/DownloadETicket/9181c0fa-12e4-4c5c-a301-0033518c0644/b4d672a0-00b5-4e99-a0e8-7c0c936d5fcb/jrny-1-pass-1.pkpasses?noBundleRedirect=true"
-        downloadFile(url_download: download_path, userCompletionHandler: { (data, downloadError) in
-
-            if let data=data {
-
-                do {
-                    let fileManager = FileManager()
-                    var destinationURL = try FileManager.default.url(for: .documentDirectory,
-                                                             in: .userDomainMask,
-                                                             appropriateFor: nil,
-                                                             create: false)
-                    destinationURL.appendPathComponent("directory")
-                    try fileManager.createDirectory(at: destinationURL, withIntermediateDirectories: true, attributes: nil)
-                    try fileManager.unzipItem(at: data, to: destinationURL)
-                    let directoryContents = try FileManager.default.contentsOfDirectory(
-                            at: destinationURL,
-                            includingPropertiesForKeys: nil
-                    )
-                    var passes: Array<PKPass> = Array()
-                    for url in directoryContents {
-                        do {
-                            let content = try Data(contentsOf: url)
-                            let pass = try PKPass.init(data: content)
-                            passes.append(pass)
-                        } catch {
-                            call.reject("PKPass Error")
-                        }
-                    }
-                    let handler = AddPassesesHandler(call: call, passes: passes)
-                    DispatchQueue.main.async {
-                        self.bridge?.viewController?.present(handler.addController, animated: true);
-                    }
-                    try FileManager.default.removeItem(at: data)
-                    try FileManager.default.removeItem(at: destinationURL)
-                } catch {
-                    call.reject("Extract Error: ")
-                }
-            }
-        })
+//        self.dataCollector.setFraudMerchantId(metchantId)
+//        self.dataCollector.collectCardFraudData() { deviceData in
+//            call.resolve([deviceData: deviceData])
+//        }
     }
 
     /**
@@ -169,7 +69,7 @@ public class BraintreePlugin: CAPPlugin {
             return
         }
 
-        BTAppSwitch.setReturnURLScheme(bundleIdentifier + ".payments")
+//        BTAppSwitch.setReturnURLScheme(bundleIdentifier + ".payments")
 
         /**
          * Assign API token
@@ -181,11 +81,11 @@ public class BraintreePlugin: CAPPlugin {
         }
 
         if let apiClient = BTAPIClient(authorization: self.token) {
-            self.dataCollector = BTDataCollector(apiClient: apiClient)
+//            self.dataCollector = BTDataCollector(apiClient: apiClient)
         }
         
         // DispatchQueue.main.async { [weak self] in
-            BTUIKAppearance.sharedInstance().primaryTextColor = UIColor(red: 34.0 / 255.0, green: 42.0 / 255.0, blue: 57.0 / 255.0, alpha: 1.0);
+//            BTUIKAppearance.sharedInstance().primaryTextColor = UIColor(red: 34.0 / 255.0, green: 42.0 / 255.0, blue: 57.0 / 255.0, alpha: 1.0);
         // }
 
 
@@ -214,7 +114,7 @@ public class BraintreePlugin: CAPPlugin {
             return
         }
 
-        BTAppSwitch.setReturnURLScheme(bundleIdentifier + ".payments")
+//        BTAppSwitch.setReturnURLScheme(bundleIdentifier + ".payments")
         
         /**
          * Assign API token
@@ -222,7 +122,7 @@ public class BraintreePlugin: CAPPlugin {
         self.token = token
 
         if let apiClient = BTAPIClient(authorization: self.token) {
-            self.dataCollector = BTDataCollector(apiClient: apiClient)
+//            self.dataCollector = BTDataCollector(apiClient: apiClient)
         }
     }
     
@@ -234,14 +134,14 @@ public class BraintreePlugin: CAPPlugin {
         }
         updateToken(token: token!)
         
-        BTDropInResult.fetch(forAuthorization: token ?? "") { (result, error) in
+        BTDropInResult.mostRecentPaymentMethod(forClientToken: token ?? "") { (result, error) in
             guard let result = result, error == nil else {
                 let response: [String: Any] = ["previousPayment": false]
                 call.resolve(response);
                 return
             }
-            
-            if result.paymentOptionType == .applePay {
+
+            if result.paymentMethodType == .applePay {
                 let response: [String: Any] = ["previousPayment": false]
                 call.resolve(response);
             } else {
@@ -254,7 +154,7 @@ public class BraintreePlugin: CAPPlugin {
                     let response: [String: Any] = ["previousPayment": false]
                     call.resolve(response);
                 }
-                
+
             }
         }
     }
@@ -298,7 +198,7 @@ public class BraintreePlugin: CAPPlugin {
     
 
         let dropInRequest = BTDropInRequest()
-        dropInRequest.threeDSecureVerification = true
+//        dropInRequest.threeDSecureVerification = true
         dropInRequest.cardholderNameSetting = .required
         dropInRequest.threeDSecureRequest = threeDSecureRequest
         dropInRequest.vaultManager = true
@@ -336,10 +236,10 @@ public class BraintreePlugin: CAPPlugin {
         { [self] (controller, result, error) in
             if (error != nil) {
                 call.reject(error!.localizedDescription)
-            } else if (result?.isCancelled == true) {
+            } else if (result?.isCanceled == true) {
                 call.resolve(["cancelled": true])
             } else if let result = result {
-                if (result.paymentMethod === nil && result.paymentOptionType == BTUIKPaymentOptionType.applePay) {
+                if (result.paymentMethod === nil && result.paymentMethodType == .applePay) {
                     let paymentRequest = PKPaymentRequest()
                     paymentRequest.paymentSummaryItems = [PKPaymentSummaryItem(label: self.merchantName, amount: payAmount)]
                     paymentRequest.supportedNetworks = [.visa, .masterCard, .amex, .discover]
@@ -360,11 +260,11 @@ public class BraintreePlugin: CAPPlugin {
                     }
                 } else {
                     let paymentMethodNonce = result.paymentMethod
-                    if (paymentMethodNonce as? BTCardNonce)?.threeDSecureInfo.wasVerified == false {
-                        self.performThreeDSecureVerification(threeDSecureRequest: threeDSecureRequest, paymentMethodNonce: paymentMethodNonce!, call: call);
-                    } else {
+//                    if (paymentMethodNonce as? BTCardNonce)?.threeDSecureInfo.wasVerified == false {
+//                        self.performThreeDSecureVerification(threeDSecureRequest: threeDSecureRequest, paymentMethodNonce: paymentMethodNonce!, call: call);
+//                    } else {
                         call.resolve(self.getPaymentMethodNonce(paymentMethodNonce: result.paymentMethod!))
-                    }
+//                    }
                     
                 }
             }
@@ -425,7 +325,7 @@ public class BraintreePlugin: CAPPlugin {
         var response: [String: Any] = ["cancelled": false]
         response["nonce"] = paymentMethodNonce.nonce
         response["type"] = paymentMethodNonce.type
-        response["localizedDescription"] = paymentMethodNonce.localizedDescription
+        response["localizedDescription"] = paymentMethodNonce.description
 
         /**
          * Handle Paypal Response
@@ -438,8 +338,6 @@ public class BraintreePlugin: CAPPlugin {
                 "firstName": payPalAccountNonce.firstName,
                 "lastName": payPalAccountNonce.lastName,
                 "phone": payPalAccountNonce.phone,
-                "clientMetadataId": payPalAccountNonce.clientMetadataId,
-                "payerId": payPalAccountNonce.payerId
             ]
         }
 
@@ -480,33 +378,33 @@ public class BraintreePlugin: CAPPlugin {
 
     }
     
-    func performThreeDSecureVerification(threeDSecureRequest: BTThreeDSecureRequest, paymentMethodNonce: BTPaymentMethodNonce, call: CAPPluginCall) {
-        guard let apiClient = BTAPIClient(authorization: self.token) else { return }
-//        guard let nonce = paymentMethodNonce.nonce else { return }
-        
-        threeDSecureRequest.nonce = paymentMethodNonce.nonce
-
-        let paymentFlowDriver = BTPaymentFlowDriver(apiClient: apiClient)
-        paymentFlowDriver.viewControllerPresentingDelegate = self
-        
-        paymentFlowDriver.startPaymentFlow(threeDSecureRequest) { (result, error) in
-//            self.selectedNonce = nil
-            
-            if let error = error {
-                if (error as NSError).code == BTPaymentFlowDriverErrorType.canceled.rawValue {
-                    // User cancelled 3DS flow and nonce was consumed
-                } else {
-                    // An error occurred and nonce was consumed
-                }
-                call.resolve(self.getPaymentMethodNonce(paymentMethodNonce: paymentMethodNonce));
-                return
-            }
-        
-            if let threeDSecureResult = result as? BTThreeDSecureResult {
-                call.resolve(self.getPaymentMethodNonce(paymentMethodNonce: threeDSecureResult.tokenizedCard));
-            }
-        }
-    }
+//    func performThreeDSecureVerification(threeDSecureRequest: BTThreeDSecureRequest, paymentMethodNonce: BTPaymentMethodNonce, call: CAPPluginCall) {
+//        guard let apiClient = BTAPIClient(authorization: self.token) else { return }
+////        guard let nonce = paymentMethodNonce.nonce else { return }
+//
+//        threeDSecureRequest.nonce = paymentMethodNonce.nonce
+//
+//        let paymentFlowDriver = BTPaymentFlowDriver(apiClient: apiClient)
+//        paymentFlowDriver.viewControllerPresentingDelegate = self
+//
+//        paymentFlowDriver.startPaymentFlow(threeDSecureRequest) { (result, error) in
+////            self.selectedNonce = nil
+//
+//            if let error = error {
+//                if (error as NSError).code == BTPaymentFlowDriverErrorType.canceled.rawValue {
+//                    // User cancelled 3DS flow and nonce was consumed
+//                } else {
+//                    // An error occurred and nonce was consumed
+//                }
+//                call.resolve(self.getPaymentMethodNonce(paymentMethodNonce: paymentMethodNonce));
+//                return
+//            }
+//
+//            if let threeDSecureResult = result as? BTThreeDSecureResult {
+//                call.resolve(self.getPaymentMethodNonce(paymentMethodNonce: threeDSecureResult.tokenizedCard ?? <#default value#>));
+//            }
+//        }
+//    }
     
     func resolveApplePayFail(message: String?) {
         if let callID = self.showCallID, let call = self.bridge?.savedCall(withID: callID) {
@@ -522,7 +420,7 @@ public class BraintreePlugin: CAPPlugin {
         response["nonce"] = paymentMethodNonce.nonce
         response["type"] = paymentMethodNonce.type
         response["deviceData"] = PPDataCollector.collectPayPalDeviceData()
-        response["localizedDescription"] = paymentMethodNonce.localizedDescription
+        response["localizedDescription"] = paymentMethodNonce.description
 //        var applePayNonce: BTApplePayCardNonce = paymentMethodNonce as! BTApplePayCardNonce;
         response["applePay"] = [
 //            "username": venmoAccountNonce.username

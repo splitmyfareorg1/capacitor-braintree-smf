@@ -1,57 +1,46 @@
 package com.sh.plugins.capacitorbraintree;
 
-import android.content.Intent;
 import android.app.Activity;
-import android.os.Parcelable;
 import android.util.Log;
 
-import androidx.activity.result.ActivityResult;
+import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentActivity;
 
-import com.braintreepayments.api.BraintreeFragment;
-import com.braintreepayments.api.DataCollector;
-import com.braintreepayments.api.dropin.utils.PaymentMethodType;
-import com.braintreepayments.api.exceptions.InvalidArgumentException;
-import com.braintreepayments.api.interfaces.BraintreeResponseListener;
-import com.braintreepayments.api.models.CardNonce;
-import com.braintreepayments.api.models.PayPalAccountNonce;
-import com.braintreepayments.api.models.GooglePaymentRequest;
-import com.braintreepayments.api.models.GooglePaymentCardNonce;
-import com.braintreepayments.api.models.PostalAddress;
-import com.braintreepayments.api.models.ThreeDSecureInfo;
-import com.braintreepayments.api.models.ThreeDSecurePostalAddress;
-import com.braintreepayments.api.models.ThreeDSecureRequest;
-import com.braintreepayments.api.models.ThreeDSecureAdditionalInformation;
-import com.braintreepayments.api.models.VenmoAccountNonce;
-import com.braintreepayments.cardform.view.CardForm;
-import com.getcapacitor.JSArray;
+import com.braintreepayments.api.CardNonce;
+import com.braintreepayments.api.DropInClient;
+import com.braintreepayments.api.DropInListener;
+import com.braintreepayments.api.DropInPaymentMethod;
+import com.braintreepayments.api.GooglePayCardNonce;
+import com.braintreepayments.api.GooglePayRequest;
+import com.braintreepayments.api.InvalidArgumentException;
+import com.braintreepayments.api.PayPalAccountNonce;
+import com.braintreepayments.api.PaymentMethodNonce;
+import com.braintreepayments.api.PostalAddress;
+import com.braintreepayments.api.ThreeDSecureInfo;
+import com.braintreepayments.api.ThreeDSecurePostalAddress;
+import com.braintreepayments.api.ThreeDSecureRequest;
+import com.braintreepayments.api.ThreeDSecureAdditionalInformation;
+import com.braintreepayments.api.VenmoAccountNonce;
+import com.getcapacitor.Bridge;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
-import com.getcapacitor.BridgeFragment;
-import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.google.android.gms.wallet.TransactionInfo;
 import com.google.android.gms.wallet.WalletConstants;
 
-import com.braintreepayments.api.dropin.DropInActivity;
-import com.braintreepayments.api.dropin.DropInRequest;
-import com.braintreepayments.api.dropin.DropInResult;
-
-import com.braintreepayments.api.models.PaymentMethodNonce;
+import com.braintreepayments.api.DropInRequest;
+import com.braintreepayments.api.DropInResult;
 
 import org.json.JSONException;
 
 @CapacitorPlugin(
         name = "Braintree"
-        //requestCodes = {
-        //        BraintreePlugin.DROP_IN_REQUEST
-        //}
 )
-public class BraintreePlugin extends Plugin {
-
+public class BraintreePlugin extends Plugin implements DropInListener {
    private String clientToken;
-   private BraintreeFragment mBraintreeFragment;
+   private BraintreeClientTokenProvider clientTokenProvider;
 
     /**
      * Logger tag
@@ -62,6 +51,8 @@ public class BraintreePlugin extends Plugin {
     static final String EXTRA_DEVICE_DATA = "device_data";
     //static final String EXTRA_COLLECT_DEVICE_DATA = "collect_device_data";
     private String deviceData = "";
+
+    private PluginCall showDropInCall;
 
     /**
      * In this version (simplified) using only "dropin" with nonce processed on server-side
@@ -75,10 +66,31 @@ public class BraintreePlugin extends Plugin {
     // private static final int LOCAL_PAYMENTS_REQUEST = 7;
     // private static final int PREFERRED_PAYMENT_METHODS_REQUEST = 8;
 
+    DropInClient dropInClient = null;
+
+    @Override
+    public void load() {
+        Log.d(PLUGIN_TAG, "dropInClient, load...");
+        clientTokenProvider = new BraintreeClientTokenProvider();
+        BraintreePlugin plugin = this;
+        Bridge bridge = this.getBridge();
+        Activity activity = bridge.getActivity();
+        activity.runOnUiThread(() -> {
+            FragmentActivity factivity = null;
+            if (activity instanceof FragmentActivity) {
+                factivity = (FragmentActivity) activity;
+                dropInClient = new DropInClient(factivity, clientTokenProvider);
+                dropInClient.setListener(plugin);
+            } else {
+                Log.d(PLUGIN_TAG, "No fragment activity... ");
+            }
+        });
+        Log.d(PLUGIN_TAG, "Plugin loaded");
+    }
+
     @PluginMethod()
     public void getDeviceData(PluginCall call) {
         String merchantId = call.getString("merchantId");
-
         if (merchantId == null) {
             call.reject("A Merchant ID is required.");
             return;
@@ -94,6 +106,7 @@ public class BraintreePlugin extends Plugin {
     @PluginMethod()
     public void setToken(PluginCall call) throws InvalidArgumentException {
         String token = call.getString("token");
+        clientTokenProvider.setClientToken(token);
 
         if (!call.getData().has("token")){
             call.reject("A token is required.");
@@ -112,31 +125,31 @@ public class BraintreePlugin extends Plugin {
     public void getRecentMethods(PluginCall call) throws InvalidArgumentException {
         String token = call.getString("token");
         this.clientToken = token;
+        clientTokenProvider.setClientToken(token);
 
         if (!call.getData().has("token")){
             call.reject("A token is required.");
             return;
         }
 
+        Bridge bridge = this.getBridge();
+        Activity activity = bridge.getActivity();
+        activity.runOnUiThread(() -> {
+            dropInClient.fetchMostRecentPaymentMethod((FragmentActivity) activity, (dropInResult, error) -> {
+                if (error != null) {
+                    JSObject resultMap = new JSObject();
+                    resultMap.put("previousPayment", false);
+                    call.resolve(resultMap);
+                    return;
+                }
 
-        DropInResult.fetchDropInResult(getActivity(), token, new DropInResult.DropInResultListener() {
-            @Override
-            public void onError(Exception exception) {
-                // an error occurred
-                JSObject resultMap = new JSObject();
-                resultMap.put("previousPayment", false);
-                call.resolve(resultMap);
-            }
-
-            @Override
-            public void onResult(DropInResult result) {
-                if (result.getPaymentMethodType() != null) {
+                if (dropInResult.getPaymentMethodType() != null) {
                     // use the icon and name to show in your UI
-                    int icon = result.getPaymentMethodType().getDrawable();
-                    int name = result.getPaymentMethodType().getLocalizedName();
+                    int icon = dropInResult.getPaymentMethodType().getDrawable();
+                    int name = dropInResult.getPaymentMethodType().getLocalizedName();
 
-                    PaymentMethodType paymentMethodType = result.getPaymentMethodType();
-                    if (paymentMethodType == PaymentMethodType.GOOGLE_PAYMENT) {
+                    DropInPaymentMethod paymentMethodType = dropInResult.getPaymentMethodType();
+                    if (paymentMethodType == DropInPaymentMethod.GOOGLE_PAY) {
                         // The last payment method the user used was Google Pay.
                         // The Google Pay flow will need to be performed by the
                         // user again at the time of checkout.
@@ -148,8 +161,8 @@ public class BraintreePlugin extends Plugin {
                         // at the time of checkout.
                         JSObject resultMap = new JSObject();
                         resultMap.put("previousPayment", true);
-                        PaymentMethodNonce paymentMethod = result.getPaymentMethodNonce();
-                        resultMap.put("data", handleNonce(paymentMethod, result.getDeviceData()));
+                        PaymentMethodNonce paymentMethod = dropInResult.getPaymentMethodNonce();
+                        resultMap.put("data", handleNonce(paymentMethod, dropInResult.getDeviceData()));
                         call.resolve(resultMap);
                     }
                 } else {
@@ -158,110 +171,80 @@ public class BraintreePlugin extends Plugin {
                     resultMap.put("previousPayment", false);
                     call.resolve(resultMap);
                 }
-            }
+            });
         });
-//        call.resolve();
+
+        call.resolve();
     }
 
     @PluginMethod()
     public void showDropIn(PluginCall call) {
-        ThreeDSecurePostalAddress address = new ThreeDSecurePostalAddress()
-            .givenName(call.getString("givenName")) // ASCII-printable characters required, else will throw a validation error
-            .surname(call.getString("surname")) // ASCII-printable characters required, else will throw a validation error
-            .phoneNumber(call.getString("phoneNumber"))
-            .streetAddress(call.getString("streetAddress"))
-            .locality(call.getString("locality"))
-            .postalCode(call.getString("postalCode"))
-            .countryCodeAlpha2(call.getString("countryCodeAlpha2"));
-        ThreeDSecureAdditionalInformation additionalInformation = new ThreeDSecureAdditionalInformation()
-           .shippingAddress(address);
-        ThreeDSecureRequest threeDSecureRequest = new ThreeDSecureRequest()
-            .amount(call.getString("amount"))
-            .email(call.getString("email"))
-            .billingAddress(address)
-            .versionRequested(ThreeDSecureRequest.VERSION_2)
-            .additionalInformation(additionalInformation);
-        DropInRequest dropInRequest = new DropInRequest()
-            .clientToken(this.clientToken)
-            .cardholderNameStatus(CardForm.FIELD_REQUIRED)
-            .requestThreeDSecureVerification(true)
-            .collectDeviceData(true)
-            .threeDSecureRequest(threeDSecureRequest)
-            .vaultManager(true);
+        showDropInCall = call;
+        ThreeDSecurePostalAddress address = new ThreeDSecurePostalAddress();
+        String givenName = call.getString("givenName");
+        Log.d(PLUGIN_TAG, "givenName: " + givenName);
+        address.setGivenName(givenName); // ASCII-printable characters required, else will throw a validation error
+        String surname = call.getString("surname");
+        Log.d(PLUGIN_TAG, "surname: " + surname);
+        address.setSurname(surname); // ASCII-printable characters required, else will throw a validation error
+        address.setPhoneNumber(call.getString("phoneNumber"));
+        address.setStreetAddress(call.getString("streetAddress"));
+        address.setLocality(call.getString("locality"));
+        address.setPostalCode(call.getString("postalCode"));
+        address.setCountryCodeAlpha2(call.getString("countryCodeAlpha2"));
 
-//        if (call.hasOption("disabled")) {
-//            JSArray disables = call.getArray("disabled");
-//            if (disables.get(0) == "googlePay") {
-//                dropInRequest.disableGooglePayment();
-//            }
-//            if (disables.get(0) == "card") {
-//                dropInRequest.disableCard();
-//            }
-//        }
+        ThreeDSecureAdditionalInformation additionalInformation = new ThreeDSecureAdditionalInformation();
+        additionalInformation.setShippingAddress(address);
 
-        if (call.hasOption("deleteMethods")) {
-            dropInRequest.disableGooglePayment();
-            dropInRequest.disableCard();
-        }
+        ThreeDSecureRequest threeDSecureRequest = new ThreeDSecureRequest();
+        threeDSecureRequest.setAmount(call.getString("amount"));
+        threeDSecureRequest.setEmail(call.getString("email"));
+        threeDSecureRequest.setBillingAddress(address);
+        threeDSecureRequest.setVersionRequested(ThreeDSecureRequest.VERSION_2);
+        threeDSecureRequest.setAdditionalInformation(additionalInformation);
 
-        GooglePaymentRequest googlePaymentRequest = new GooglePaymentRequest()
-                .transactionInfo(TransactionInfo.newBuilder()
-                        .setTotalPrice(call.getString("amount"))
-                        .setTotalPriceStatus(WalletConstants.TOTAL_PRICE_STATUS_FINAL)
-                        .setCurrencyCode(call.getString("currencyCode"))
-                        .build())
-                .billingAddressRequired(true)
-                .googleMerchantId(call.getString("googleMerchantId"));
-        dropInRequest.googlePaymentRequest(googlePaymentRequest);
-        Intent intent = dropInRequest.getIntent(getContext());
+        clientTokenProvider.setClientToken(clientToken);
 
-        Log.d(PLUGIN_TAG, "showDropIn started");
+        Bridge bridge = this.getBridge();
+        Activity activity = bridge.getActivity();
 
-        startActivityForResult(call, intent, "dropinCallback");
-    }
+        BraintreePlugin plugin = this;
+        activity.runOnUiThread(() -> {
+            DropInRequest dropInRequest = new DropInRequest();
+            dropInRequest.setThreeDSecureRequest(threeDSecureRequest);
 
-    @ActivityCallback
-    protected void dropinCallback(PluginCall call, ActivityResult activityResult) {
-        Intent data = activityResult.getData();
-
-        Log.d(PLUGIN_TAG, "dropinCallback. Result code: "+activityResult.getResultCode()+", intent: "+data);
-
-        if (call == null) {
-            return;
-        }
-
-        if (activityResult.getResultCode() == Activity.RESULT_CANCELED) {
-            if (data != null) {
-                DropInResult result = data.getParcelableExtra(DropInResult.EXTRA_DROP_IN_RESULT);
-                call.resolve(handleCanceled(result.getDeviceData()));
-            } else {
-                call.resolve(handleCanceled(null));
+            if (call.hasOption("deleteMethods")) {
+                Log.d(PLUGIN_TAG, "dropInClient, has deleteMethods...");
+                dropInRequest.setGooglePayDisabled(true);
+                dropInRequest.setCardDisabled(true);
             }
 
-        }
+            Log.d(PLUGIN_TAG, "dropInClient, GooglePayRequest...");
+            GooglePayRequest googlePaymentRequest = new GooglePayRequest();
+            googlePaymentRequest.setTransactionInfo(TransactionInfo.newBuilder()
+                            .setTotalPrice(call.getString("amount"))
+                            .setTotalPriceStatus(WalletConstants.TOTAL_PRICE_STATUS_FINAL)
+                            .setCurrencyCode(call.getString("currencyCode"))
+                            .build());
+            googlePaymentRequest.setBillingAddressRequired(true);
 
 
-        if (activityResult.getResultCode() == Activity.RESULT_OK) {
-            DropInResult result = data.getParcelableExtra(DropInResult.EXTRA_DROP_IN_RESULT);
-            call.resolve(handleNonce(result.getPaymentMethodNonce(), result.getDeviceData()));
-        } else {
-            Exception ex = (Exception) data.getSerializableExtra(DropInActivity.EXTRA_ERROR);
-            String msg = ex.getMessage();
-            Log.e(PLUGIN_TAG, "Error: "+msg);
-            call.reject(msg, ex);
-        }
+            googlePaymentRequest.setGoogleMerchantId(call.getString("googleMerchantId"));
+            dropInRequest.setGooglePayRequest(googlePaymentRequest);
+
+            Log.d(PLUGIN_TAG, "showDropIn started...");
+            dropInClient.launchDropIn(dropInRequest);
+        });
     }
 
     /**
      *
-     * @param deviceData device info (not used in context)
      */
-    private JSObject handleCanceled(String deviceData) {
-        Log.d(PLUGIN_TAG, "handleNonce");
-
+    private JSObject handleCanceled() {
+        Log.d(PLUGIN_TAG, "handleCanceled...");
         JSObject resultMap = new JSObject();
         resultMap.put("cancelled", true);
-        resultMap.put("deviceData", deviceData);
+
         return resultMap;
     }
 
@@ -285,13 +268,17 @@ public class BraintreePlugin extends Plugin {
      * @param deviceData Device info
      */
     private JSObject handleNonce(PaymentMethodNonce paymentMethodNonce, String deviceData) {
-        Log.d(PLUGIN_TAG, "handleNonce");
+        Log.d(PLUGIN_TAG, "handleNonce...");
 
         JSObject resultMap = new JSObject();
         resultMap.put("cancelled", false);
-        resultMap.put("nonce", paymentMethodNonce.getNonce());
-        resultMap.put("type", paymentMethodNonce.getTypeLabel());
-        resultMap.put("localizedDescription", paymentMethodNonce.getDescription());
+        resultMap.put("nonce", paymentMethodNonce.getString());
+        ///??? LB
+//        resultMap.put("type", paymentMethodNonce.getTypeLabel());
+//        resultMap.put("localizedDescription", paymentMethodNonce.getDescription());
+
+        resultMap.put("type", paymentMethodNonce.getString());
+        resultMap.put("localizedDescription", paymentMethodNonce.getString());
         this.deviceData = deviceData;
         resultMap.put("deviceData", deviceData);
 
@@ -303,7 +290,8 @@ public class BraintreePlugin extends Plugin {
             innerMap.put("lastTwo", cardNonce.getLastTwo());
             innerMap.put("network", cardNonce.getCardType());
             innerMap.put("cardHolderName", cardNonce.getCardholderName());
-            innerMap.put("type", cardNonce.getTypeLabel());
+            ///??? LB
+//            innerMap.put("type", cardNonce.getTypeLabel());
             innerMap.put("token", cardNonce.toString());
 
 
@@ -357,14 +345,15 @@ public class BraintreePlugin extends Plugin {
             resultMap.put("venmoAccount", innerMap);
         }
 
-        if (paymentMethodNonce instanceof GooglePaymentCardNonce) {
-            GooglePaymentCardNonce googlePayCardNonce = (GooglePaymentCardNonce) paymentMethodNonce;
+        if (paymentMethodNonce instanceof GooglePayCardNonce) {
+            GooglePayCardNonce googlePayCardNonce = (GooglePayCardNonce) paymentMethodNonce;
 
             JSObject innerMap = new JSObject();
             innerMap.put("lastTwo", googlePayCardNonce.getLastTwo());
             innerMap.put("email", googlePayCardNonce.getEmail());
             innerMap.put("network", googlePayCardNonce.getCardType());
-            innerMap.put("type", googlePayCardNonce.getTypeLabel());
+            ///??? LB
+//            innerMap.put("type", googlePayCardNonce.getTypeLabel());
             innerMap.put("token", googlePayCardNonce.toString());
             innerMap.put("billingAddress", formatAddress(googlePayCardNonce.getBillingAddress()));
             innerMap.put("shippingAddress", formatAddress(googlePayCardNonce.getShippingAddress()));
@@ -373,5 +362,17 @@ public class BraintreePlugin extends Plugin {
         }
 
         return resultMap;
+    }
+
+    @Override
+    public void onDropInSuccess(@NonNull DropInResult dropInResult) {
+          PaymentMethodNonce paymentMethodNonce = dropInResult.getPaymentMethodNonce();
+          String deviceData = dropInResult.getDeviceData();
+          showDropInCall.resolve(handleNonce(paymentMethodNonce, deviceData));
+    }
+
+    @Override
+    public void onDropInFailure(@NonNull Exception error) {
+        showDropInCall.resolve(handleCanceled());
     }
 }

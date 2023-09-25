@@ -88,6 +88,9 @@ public class BraintreePlugin extends Plugin implements DropInListener {
         Log.d(PLUGIN_TAG, "Plugin loaded");
     }
 
+    /**
+     * Called when the plugin is removed from the project.
+     */
     @PluginMethod()
     public void getDeviceData(PluginCall call) {
         String merchantId = call.getString("merchantId");
@@ -225,6 +228,7 @@ public class BraintreePlugin extends Plugin implements DropInListener {
                             .setTotalPrice(call.getString("amount"))
                             .setTotalPriceStatus(WalletConstants.TOTAL_PRICE_STATUS_FINAL)
                             .setCurrencyCode(call.getString("currencyCode"))
+
                             .build());
             googlePaymentRequest.setBillingAddressRequired(true);
 
@@ -268,15 +272,12 @@ public class BraintreePlugin extends Plugin implements DropInListener {
      * @param deviceData Device info
      */
     private JSObject handleNonce(PaymentMethodNonce paymentMethodNonce, String deviceData) {
-        Log.d(PLUGIN_TAG, "handleNonce...");
+        Log.d(PLUGIN_TAG, "handleNonce..." + paymentMethodNonce.getString());
 
         JSObject resultMap = new JSObject();
         resultMap.put("cancelled", false);
         resultMap.put("nonce", paymentMethodNonce.getString());
-        ///??? LB
-//        resultMap.put("type", paymentMethodNonce.getTypeLabel());
 //        resultMap.put("localizedDescription", paymentMethodNonce.getDescription());
-
         resultMap.put("type", paymentMethodNonce.getString());
         resultMap.put("localizedDescription", paymentMethodNonce.getString());
         this.deviceData = deviceData;
@@ -285,18 +286,15 @@ public class BraintreePlugin extends Plugin implements DropInListener {
         // Card
         if (paymentMethodNonce instanceof CardNonce) {
             CardNonce cardNonce = (CardNonce)paymentMethodNonce;
+            resultMap.put("type", cardNonce.getCardType());
 
             JSObject innerMap = new JSObject();
             innerMap.put("lastTwo", cardNonce.getLastTwo());
             innerMap.put("network", cardNonce.getCardType());
             innerMap.put("cardHolderName", cardNonce.getCardholderName());
-            ///??? LB
-//            innerMap.put("type", cardNonce.getTypeLabel());
             innerMap.put("token", cardNonce.toString());
 
-
             ThreeDSecureInfo threeDSecureInfo = cardNonce.getThreeDSecureInfo();
-
             if (threeDSecureInfo != null) {
                 JSObject threeDMap = new JSObject();
                 threeDMap.put("threeDSecureVerified", threeDSecureInfo.wasVerified());
@@ -315,7 +313,6 @@ public class BraintreePlugin extends Plugin implements DropInListener {
         // PayPal
         if (paymentMethodNonce instanceof PayPalAccountNonce) {
             PayPalAccountNonce payPalAccountNonce = (PayPalAccountNonce)paymentMethodNonce;
-
             JSObject innerMap = new JSObject();
             resultMap.put("email", payPalAccountNonce.getEmail());
             resultMap.put("firstName", payPalAccountNonce.getFirstName());
@@ -332,7 +329,6 @@ public class BraintreePlugin extends Plugin implements DropInListener {
         // 3D Secure
         if (paymentMethodNonce instanceof CardNonce) {
             CardNonce cardNonce = (CardNonce) paymentMethodNonce;
-
         }
 
         // Venmo
@@ -347,13 +343,12 @@ public class BraintreePlugin extends Plugin implements DropInListener {
 
         if (paymentMethodNonce instanceof GooglePayCardNonce) {
             GooglePayCardNonce googlePayCardNonce = (GooglePayCardNonce) paymentMethodNonce;
+            resultMap.put("type", googlePayCardNonce.getCardType());
 
             JSObject innerMap = new JSObject();
             innerMap.put("lastTwo", googlePayCardNonce.getLastTwo());
             innerMap.put("email", googlePayCardNonce.getEmail());
             innerMap.put("network", googlePayCardNonce.getCardType());
-            ///??? LB
-//            innerMap.put("type", googlePayCardNonce.getTypeLabel());
             innerMap.put("token", googlePayCardNonce.toString());
             innerMap.put("billingAddress", formatAddress(googlePayCardNonce.getBillingAddress()));
             innerMap.put("shippingAddress", formatAddress(googlePayCardNonce.getShippingAddress()));
@@ -366,6 +361,7 @@ public class BraintreePlugin extends Plugin implements DropInListener {
 
     @Override
     public void onDropInSuccess(@NonNull DropInResult dropInResult) {
+          Log.d(PLUGIN_TAG, "onDropInSuccess..." + dropInResult.getPaymentMethodNonce().getString());
           PaymentMethodNonce paymentMethodNonce = dropInResult.getPaymentMethodNonce();
           String deviceData = dropInResult.getDeviceData();
           showDropInCall.resolve(handleNonce(paymentMethodNonce, deviceData));

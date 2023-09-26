@@ -286,6 +286,7 @@ public class BraintreePlugin extends Plugin implements DropInListener {
         resultMap.put("deviceData", deviceData);
 
         // Card
+        Log.d(PLUGIN_TAG, "handleNonce, Card...");
         if (paymentMethodNonce instanceof CardNonce) {
             CardNonce cardNonce = (CardNonce)paymentMethodNonce;
             resultMap.put("type", cardNonce.getCardType());
@@ -315,6 +316,7 @@ public class BraintreePlugin extends Plugin implements DropInListener {
         }
 
         // PayPal
+        Log.d(PLUGIN_TAG, "handleNonce, PayPal...");
         if (paymentMethodNonce instanceof PayPalAccountNonce) {
             PayPalAccountNonce payPalAccountNonce = (PayPalAccountNonce)paymentMethodNonce;
             JSObject innerMap = new JSObject();
@@ -345,20 +347,28 @@ public class BraintreePlugin extends Plugin implements DropInListener {
             resultMap.put("venmoAccount", innerMap);
         }
 
+        Log.d(PLUGIN_TAG, "handleNonce, GooglePay...");
         if (paymentMethodNonce instanceof GooglePayCardNonce) {
             GooglePayCardNonce googlePayCardNonce = (GooglePayCardNonce) paymentMethodNonce;
             resultMap.put("type", googlePayCardNonce.getCardType());
             resultMap.put("localizedDescription", googlePayCardNonce.describeContents());
+            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap...");
 
             JSObject innerMap = new JSObject();
             innerMap.put("lastTwo", googlePayCardNonce.getLastTwo());
+            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap1...");
             innerMap.put("email", googlePayCardNonce.getEmail());
+            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap2...");
             innerMap.put("network", googlePayCardNonce.getCardNetwork());
+            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap3...");
             innerMap.put("type", googlePayCardNonce.getCardType());
+            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap4...");
             innerMap.put("token", googlePayCardNonce.toString());
+            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap5...");
             innerMap.put("billingAddress", formatAddress(googlePayCardNonce.getBillingAddress()));
+            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap6...");
             innerMap.put("shippingAddress", formatAddress(googlePayCardNonce.getShippingAddress()));
-
+            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap7...");
             resultMap.put("googlePay", innerMap);
         }
 

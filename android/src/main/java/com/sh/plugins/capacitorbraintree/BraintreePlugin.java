@@ -274,15 +274,17 @@ public class BraintreePlugin extends Plugin implements DropInListener {
      * @param deviceData Device info
      */
     private JSObject handleNonce(PaymentMethodNonce paymentMethodNonce, String deviceData) {
-        Log.d(PLUGIN_TAG, "handleNonce..." + paymentMethodNonce.getString());
+        Log.d(PLUGIN_TAG, "handleNonce2..." + paymentMethodNonce.getString());
 
         JSObject resultMap = new JSObject();
         resultMap.put("cancelled", false);
+        Log.d(PLUGIN_TAG, "handleNonce, paymentMethodNonce.getString...");
         resultMap.put("nonce", paymentMethodNonce.getString());
 //        resultMap.put("localizedDescription", paymentMethodNonce.getDescription());
         resultMap.put("type", paymentMethodNonce.getString());
         resultMap.put("localizedDescription", paymentMethodNonce.getString());
         this.deviceData = deviceData;
+        Log.d(PLUGIN_TAG, "handleNonce, resultMap...");
         resultMap.put("deviceData", deviceData);
 
         // Card

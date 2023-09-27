@@ -365,7 +365,7 @@ public class BraintreePlugin extends Plugin implements DropInListener {
             Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap3...");
             innerMap.put("type", googlePayCardNonce.getCardType());
             Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap4...");
-            innerMap.put("token", googlePayCardNonce.toString());
+            innerMap.put("token", googlePayCardNonce.getString());
             Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap5...");
             innerMap.put("billingAddress", formatAddress(googlePayCardNonce.getBillingAddress()));
             Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap6...");

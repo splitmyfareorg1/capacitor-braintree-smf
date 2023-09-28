@@ -21,6 +21,7 @@ import com.braintreepayments.api.ThreeDSecurePostalAddress;
 import com.braintreepayments.api.ThreeDSecureRequest;
 import com.braintreepayments.api.ThreeDSecureAdditionalInformation;
 import com.braintreepayments.api.VenmoAccountNonce;
+import com.braintreepayments.cardform.view.CardForm;
 import com.getcapacitor.Bridge;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -133,6 +134,7 @@ public class BraintreePlugin extends Plugin implements DropInListener {
 
         if (!call.getData().has("token")){
             call.reject("A token is required.");
+            Log.d(PLUGIN_TAG, "A token is required...");
             return;
         }
 
@@ -140,14 +142,17 @@ public class BraintreePlugin extends Plugin implements DropInListener {
         Activity activity = bridge.getActivity();
         activity.runOnUiThread(() -> {
             dropInClient.fetchMostRecentPaymentMethod((FragmentActivity) activity, (dropInResult, error) -> {
+                Log.d(PLUGIN_TAG, "fetchMostRecentPaymentMethod, callback...");
                 if (error != null) {
                     JSObject resultMap = new JSObject();
                     resultMap.put("previousPayment", false);
                     call.resolve(resultMap);
+                    Log.d(PLUGIN_TAG, "fetchMostRecentPaymentMethod, error, previousPayment...");
                     return;
                 }
 
                 if (dropInResult.getPaymentMethodType() != null) {
+                    Log.d(PLUGIN_TAG, "fetchMostRecentPaymentMethod, getPaymentMethodType...");
                     // use the icon and name to show in your UI
                     int icon = dropInResult.getPaymentMethodType().getDrawable();
                     int name = dropInResult.getPaymentMethodType().getLocalizedName();
@@ -159,6 +164,7 @@ public class BraintreePlugin extends Plugin implements DropInListener {
                         // user again at the time of checkout.
                         JSObject resultMap = new JSObject();
                         resultMap.put("previousPayment", false);
+                        Log.d(PLUGIN_TAG, "fetchMostRecentPaymentMethod, GOOGLE_PAY...");
                         call.resolve(resultMap);
                     } else {
                         // Use the payment method show in your UI and charge the user
@@ -168,9 +174,11 @@ public class BraintreePlugin extends Plugin implements DropInListener {
                         PaymentMethodNonce paymentMethod = dropInResult.getPaymentMethodNonce();
                         Log.d(PLUGIN_TAG, "getRecentMethods, handleNonce...");
                         resultMap.put("data", handleNonce(paymentMethod, dropInResult.getDeviceData()));
+                        Log.d(PLUGIN_TAG, "fetchMostRecentPaymentMethod, getPaymentMethodType, else...");
                         call.resolve(resultMap);
                     }
                 } else {
+                    Log.d(PLUGIN_TAG, "fetchMostRecentPaymentMethod, else...");
                     // there was no existing payment method
                     JSObject resultMap = new JSObject();
                     resultMap.put("previousPayment", false);
@@ -185,6 +193,7 @@ public class BraintreePlugin extends Plugin implements DropInListener {
     @PluginMethod()
     public void showDropIn(PluginCall call) {
         showDropInCall = call;
+        // ThreeD settings
         ThreeDSecurePostalAddress address = new ThreeDSecurePostalAddress();
         String givenName = call.getString("givenName");
         Log.d(PLUGIN_TAG, "givenName: " + givenName);
@@ -216,7 +225,11 @@ public class BraintreePlugin extends Plugin implements DropInListener {
         BraintreePlugin plugin = this;
         activity.runOnUiThread(() -> {
             DropInRequest dropInRequest = new DropInRequest();
+            dropInRequest.setCardholderNameStatus(CardForm.FIELD_REQUIRED);
+            //dropInRequest.requestThreeDSecureVerification(true); ///??? removed, what to do with it?
+//            dropInRequest.collectDeviceData(true); ///??? removed, what to do with it?
             dropInRequest.setThreeDSecureRequest(threeDSecureRequest);
+            dropInRequest.setVaultManagerEnabled(true);
 
             if (call.hasOption("deleteMethods")) {
                 Log.d(PLUGIN_TAG, "dropInClient, has deleteMethods...");
@@ -233,9 +246,7 @@ public class BraintreePlugin extends Plugin implements DropInListener {
 
                             .build());
             googlePaymentRequest.setBillingAddressRequired(true);
-
-
-            googlePaymentRequest.setGoogleMerchantId(call.getString("googleMerchantId"));
+            //googlePaymentRequest.setGoogleMerchantId(call.getString("googleMerchantId")); ///??? deprecated
             dropInRequest.setGooglePayRequest(googlePaymentRequest);
 
             Log.d(PLUGIN_TAG, "showDropIn started...");
@@ -280,7 +291,7 @@ public class BraintreePlugin extends Plugin implements DropInListener {
         resultMap.put("cancelled", false);
         Log.d(PLUGIN_TAG, "handleNonce, paymentMethodNonce.getString...");
         resultMap.put("nonce", paymentMethodNonce.getString());
-//        resultMap.put("localizedDescription", paymentMethodNonce.getDescription());
+        resultMap.put("localizedDescription", paymentMethodNonce.describeContents());
         resultMap.put("type", paymentMethodNonce.getString());
         resultMap.put("localizedDescription", paymentMethodNonce.getString());
         this.deviceData = deviceData;
@@ -375,7 +386,6 @@ public class BraintreePlugin extends Plugin implements DropInListener {
         }
 
         Log.d(PLUGIN_TAG, "handleNonce, resultMap: " + resultMap.toString());
-
         return resultMap;
     }
 

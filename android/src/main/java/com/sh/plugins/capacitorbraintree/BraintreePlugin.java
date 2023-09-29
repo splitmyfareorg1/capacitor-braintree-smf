@@ -71,7 +71,7 @@ public class BraintreePlugin extends Plugin implements DropInListener {
 
     @Override
     public void load() {
-        Log.d(PLUGIN_TAG, "dropInClient, load...");
+//        Log.d(PLUGIN_TAG, "dropInClient, load...");
         clientTokenProvider = new BraintreeClientTokenProvider();
         BraintreePlugin plugin = this;
         Bridge bridge = this.getBridge();
@@ -86,7 +86,7 @@ public class BraintreePlugin extends Plugin implements DropInListener {
                 Log.d(PLUGIN_TAG, "No fragment activity... ");
             }
         });
-        Log.d(PLUGIN_TAG, "Plugin loaded");
+//        Log.d(PLUGIN_TAG, "Plugin loaded");
     }
 
     /**
@@ -127,7 +127,7 @@ public class BraintreePlugin extends Plugin implements DropInListener {
 
     @PluginMethod()
     public void getRecentMethods(PluginCall call) throws InvalidArgumentException {
-        Log.d(PLUGIN_TAG, "getRecentMethods...");
+//        Log.d(PLUGIN_TAG, "getRecentMethods...");
         String token = call.getString("token");
         this.clientToken = token;
         clientTokenProvider.setClientToken(token);
@@ -142,17 +142,17 @@ public class BraintreePlugin extends Plugin implements DropInListener {
         Activity activity = bridge.getActivity();
         activity.runOnUiThread(() -> {
             dropInClient.fetchMostRecentPaymentMethod((FragmentActivity) activity, (dropInResult, error) -> {
-                Log.d(PLUGIN_TAG, "fetchMostRecentPaymentMethod, callback...");
+//                Log.d(PLUGIN_TAG, "fetchMostRecentPaymentMethod, callback...");
                 if (error != null) {
                     JSObject resultMap = new JSObject();
                     resultMap.put("previousPayment", false);
                     call.resolve(resultMap);
-                    Log.d(PLUGIN_TAG, "fetchMostRecentPaymentMethod, error, previousPayment...");
+//                    Log.d(PLUGIN_TAG, "fetchMostRecentPaymentMethod, error, previousPayment...");
                     return;
                 }
 
                 if (dropInResult.getPaymentMethodType() != null) {
-                    Log.d(PLUGIN_TAG, "fetchMostRecentPaymentMethod, getPaymentMethodType...");
+//                    Log.d(PLUGIN_TAG, "fetchMostRecentPaymentMethod, getPaymentMethodType...");
                     // use the icon and name to show in your UI
                     int icon = dropInResult.getPaymentMethodType().getDrawable();
                     int name = dropInResult.getPaymentMethodType().getLocalizedName();
@@ -164,7 +164,7 @@ public class BraintreePlugin extends Plugin implements DropInListener {
                         // user again at the time of checkout.
                         JSObject resultMap = new JSObject();
                         resultMap.put("previousPayment", false);
-                        Log.d(PLUGIN_TAG, "fetchMostRecentPaymentMethod, GOOGLE_PAY...");
+//                        Log.d(PLUGIN_TAG, "fetchMostRecentPaymentMethod, GOOGLE_PAY...");
                         call.resolve(resultMap);
                     } else {
                         // Use the payment method show in your UI and charge the user
@@ -172,13 +172,13 @@ public class BraintreePlugin extends Plugin implements DropInListener {
                         JSObject resultMap = new JSObject();
                         resultMap.put("previousPayment", true);
                         PaymentMethodNonce paymentMethod = dropInResult.getPaymentMethodNonce();
-                        Log.d(PLUGIN_TAG, "getRecentMethods, handleNonce...");
+//                        Log.d(PLUGIN_TAG, "getRecentMethods, handleNonce...");
                         resultMap.put("data", handleNonce(paymentMethod, dropInResult.getDeviceData()));
-                        Log.d(PLUGIN_TAG, "fetchMostRecentPaymentMethod, getPaymentMethodType, else...");
+//                        Log.d(PLUGIN_TAG, "fetchMostRecentPaymentMethod, getPaymentMethodType, else...");
                         call.resolve(resultMap);
                     }
                 } else {
-                    Log.d(PLUGIN_TAG, "fetchMostRecentPaymentMethod, else...");
+//                    Log.d(PLUGIN_TAG, "fetchMostRecentPaymentMethod, else...");
                     // there was no existing payment method
                     JSObject resultMap = new JSObject();
                     resultMap.put("previousPayment", false);
@@ -196,10 +196,10 @@ public class BraintreePlugin extends Plugin implements DropInListener {
         // ThreeD settings
         ThreeDSecurePostalAddress address = new ThreeDSecurePostalAddress();
         String givenName = call.getString("givenName");
-        Log.d(PLUGIN_TAG, "givenName: " + givenName);
+//        Log.d(PLUGIN_TAG, "givenName: " + givenName);
         address.setGivenName(givenName); // ASCII-printable characters required, else will throw a validation error
         String surname = call.getString("surname");
-        Log.d(PLUGIN_TAG, "surname: " + surname);
+//        Log.d(PLUGIN_TAG, "surname: " + surname);
         address.setSurname(surname); // ASCII-printable characters required, else will throw a validation error
         address.setPhoneNumber(call.getString("phoneNumber"));
         address.setStreetAddress(call.getString("streetAddress"));
@@ -232,12 +232,12 @@ public class BraintreePlugin extends Plugin implements DropInListener {
             dropInRequest.setVaultManagerEnabled(true);
 
             if (call.hasOption("deleteMethods")) {
-                Log.d(PLUGIN_TAG, "dropInClient, has deleteMethods...");
+//                Log.d(PLUGIN_TAG, "dropInClient, has deleteMethods...");
                 dropInRequest.setGooglePayDisabled(true);
                 dropInRequest.setCardDisabled(true);
             }
 
-            Log.d(PLUGIN_TAG, "dropInClient, GooglePayRequest...");
+//            Log.d(PLUGIN_TAG, "dropInClient, GooglePayRequest...");
             GooglePayRequest googlePaymentRequest = new GooglePayRequest();
             googlePaymentRequest.setTransactionInfo(TransactionInfo.newBuilder()
                             .setTotalPrice(call.getString("amount"))
@@ -249,7 +249,7 @@ public class BraintreePlugin extends Plugin implements DropInListener {
             //googlePaymentRequest.setGoogleMerchantId(call.getString("googleMerchantId")); ///??? deprecated
             dropInRequest.setGooglePayRequest(googlePaymentRequest);
 
-            Log.d(PLUGIN_TAG, "showDropIn started...");
+//            Log.d(PLUGIN_TAG, "showDropIn started...");
             dropInClient.launchDropIn(dropInRequest);
         });
     }
@@ -258,7 +258,7 @@ public class BraintreePlugin extends Plugin implements DropInListener {
      *
      */
     private JSObject handleCanceled() {
-        Log.d(PLUGIN_TAG, "handleCanceled...");
+//        Log.d(PLUGIN_TAG, "handleCanceled...");
         JSObject resultMap = new JSObject();
         resultMap.put("cancelled", true);
 
@@ -285,21 +285,21 @@ public class BraintreePlugin extends Plugin implements DropInListener {
      * @param deviceData Device info
      */
     private JSObject handleNonce(PaymentMethodNonce paymentMethodNonce, String deviceData) {
-        Log.d(PLUGIN_TAG, "handleNonce2..." + paymentMethodNonce.getString());
+//        Log.d(PLUGIN_TAG, "handleNonce2..." + paymentMethodNonce.getString());
 
         JSObject resultMap = new JSObject();
         resultMap.put("cancelled", false);
-        Log.d(PLUGIN_TAG, "handleNonce, paymentMethodNonce.getString...");
+//        Log.d(PLUGIN_TAG, "handleNonce, paymentMethodNonce.getString...");
         resultMap.put("nonce", paymentMethodNonce.getString());
         resultMap.put("localizedDescription", paymentMethodNonce.describeContents());
         resultMap.put("type", paymentMethodNonce.getString());
         resultMap.put("localizedDescription", paymentMethodNonce.getString());
         this.deviceData = deviceData;
-        Log.d(PLUGIN_TAG, "handleNonce, resultMap...");
+//        Log.d(PLUGIN_TAG, "handleNonce, resultMap...");
         resultMap.put("deviceData", deviceData);
 
         // Card
-        Log.d(PLUGIN_TAG, "handleNonce, Card...");
+//        Log.d(PLUGIN_TAG, "handleNonce, Card...");
         if (paymentMethodNonce instanceof CardNonce) {
             CardNonce cardNonce = (CardNonce)paymentMethodNonce;
             resultMap.put("type", cardNonce.getCardType());
@@ -310,7 +310,7 @@ public class BraintreePlugin extends Plugin implements DropInListener {
             innerMap.put("network", cardNonce.getCardType());
             innerMap.put("type", cardNonce.getCardType());
             innerMap.put("cardHolderName", cardNonce.getCardholderName());
-            innerMap.put("token", cardNonce.toString());
+            innerMap.put("token", cardNonce.getString());
 
             ThreeDSecureInfo threeDSecureInfo = cardNonce.getThreeDSecureInfo();
             if (threeDSecureInfo != null) {
@@ -329,7 +329,7 @@ public class BraintreePlugin extends Plugin implements DropInListener {
         }
 
         // PayPal
-        Log.d(PLUGIN_TAG, "handleNonce, PayPal...");
+//        Log.d(PLUGIN_TAG, "handleNonce, PayPal...");
         if (paymentMethodNonce instanceof PayPalAccountNonce) {
             PayPalAccountNonce payPalAccountNonce = (PayPalAccountNonce)paymentMethodNonce;
             JSObject innerMap = new JSObject();
@@ -360,47 +360,47 @@ public class BraintreePlugin extends Plugin implements DropInListener {
             resultMap.put("venmoAccount", innerMap);
         }
 
-        Log.d(PLUGIN_TAG, "handleNonce, GooglePay...");
+//        Log.d(PLUGIN_TAG, "handleNonce, GooglePay...");
         if (paymentMethodNonce instanceof GooglePayCardNonce) {
             GooglePayCardNonce googlePayCardNonce = (GooglePayCardNonce) paymentMethodNonce;
             resultMap.put("type", googlePayCardNonce.getCardType());
             resultMap.put("localizedDescription", googlePayCardNonce.describeContents());
-            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap...");
+//            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap...");
 
             JSObject innerMap = new JSObject();
             innerMap.put("lastTwo", googlePayCardNonce.getLastTwo());
-            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap1...");
+//            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap1...");
             innerMap.put("email", googlePayCardNonce.getEmail());
-            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap2...");
+//            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap2...");
             innerMap.put("network", googlePayCardNonce.getCardNetwork());
-            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap3...");
+//            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap3...");
             innerMap.put("type", googlePayCardNonce.getCardType());
-            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap4...");
+//            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap4...");
             innerMap.put("token", googlePayCardNonce.getString());
-            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap5...");
+//            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap5...");
             innerMap.put("billingAddress", formatAddress(googlePayCardNonce.getBillingAddress()));
-            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap6...");
+//            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap6...");
             innerMap.put("shippingAddress", formatAddress(googlePayCardNonce.getShippingAddress()));
-            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap7...");
+//            Log.d(PLUGIN_TAG, "handleNonce, GooglePay, innermap7...");
             resultMap.put("googlePay", innerMap);
         }
 
-        Log.d(PLUGIN_TAG, "handleNonce, resultMap: " + resultMap.toString());
+//        Log.d(PLUGIN_TAG, "handleNonce, resultMap: " + resultMap.toString());
         return resultMap;
     }
 
     @Override
     public void onDropInSuccess(@NonNull DropInResult dropInResult) {
-          Log.d(PLUGIN_TAG, "onDropInSuccess..." + dropInResult.getPaymentMethodNonce().getString());
+//          Log.d(PLUGIN_TAG, "onDropInSuccess..." + dropInResult.getPaymentMethodNonce().getString());
           PaymentMethodNonce paymentMethodNonce = dropInResult.getPaymentMethodNonce();
           String deviceData = dropInResult.getDeviceData();
           showDropInCall.resolve(handleNonce(paymentMethodNonce, deviceData));
-          Log.d(PLUGIN_TAG, "onDropInSuccess, handleNonce...sent");
+//          Log.d(PLUGIN_TAG, "onDropInSuccess, handleNonce...sent");
     }
 
     @Override
     public void onDropInFailure(@NonNull Exception error) {
-        Log.d(PLUGIN_TAG, "onDropInFailure..." + (error != null ? error.getMessage() : "no error"));
+//        Log.d(PLUGIN_TAG, "onDropInFailure..." + (error != null ? error.getMessage() : "no error"));
         showDropInCall.resolve(handleCanceled());
     }
 }

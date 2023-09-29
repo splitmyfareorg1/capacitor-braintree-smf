@@ -248,6 +248,7 @@ public class BraintreePlugin extends Plugin implements DropInListener {
             googlePaymentRequest.setBillingAddressRequired(true);
             //googlePaymentRequest.setGoogleMerchantId(call.getString("googleMerchantId")); ///??? deprecated
 //            dropInRequest.setGooglePayRequest(googlePaymentRequest);
+            dropInRequest.setGooglePayDisabled(true);
 
 //            Log.d(PLUGIN_TAG, "showDropIn started...");
             dropInClient.launchDropIn(dropInRequest);

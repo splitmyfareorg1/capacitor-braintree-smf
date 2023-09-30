@@ -18,5 +18,8 @@ export class BraintreeWeb extends WebPlugin {
     getTickets(options) {
         return this.getTickets(options);
     }
+    log(options) {
+        return this.log(options);
+    }
 }
 //# sourceMappingURL=web.js.map

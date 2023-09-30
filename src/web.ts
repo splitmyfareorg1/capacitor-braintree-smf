@@ -8,7 +8,8 @@ import type {
   DataCollectorOptions,
   RecentMethod,
   AppleGoogleOptions,
-  TicketOptions
+  TicketOptions,
+  LogOptions
 } from './definitions';
 
 export class BraintreeWeb extends WebPlugin implements BraintreePlugin {
@@ -34,5 +35,9 @@ export class BraintreeWeb extends WebPlugin implements BraintreePlugin {
 
   getTickets(options: TicketOptions): Promise<any> {
     return this.getTickets(options);
+  }
+  
+  log(options: LogOptions): Promise<any> {
+    return this.log(options);
   }
 }

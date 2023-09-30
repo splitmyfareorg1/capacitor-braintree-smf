@@ -103,6 +103,10 @@ export interface TicketOptions {
   download: string;
 }
 
+export interface LogOptions {
+  text: string;
+}
+
 export interface BraintreePlugin {
   setToken(options: DropInToken): Promise<any>;
 
@@ -115,4 +119,6 @@ export interface BraintreePlugin {
   showApplePay(options: AppleGoogleOptions): Promise<DropInResult>;
 
   getTickets(options: TicketOptions): Promise<any>;
+  
+  log(options: LogOptions): Promise<any>;
 }

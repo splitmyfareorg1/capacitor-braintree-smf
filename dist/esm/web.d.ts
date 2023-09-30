@@ -1,5 +1,5 @@
 import { WebPlugin } from '@capacitor/core';
-import type { BraintreePlugin, DropInOptions, DropInResult, DropInToken, DataCollectorOptions, RecentMethod, AppleGoogleOptions, TicketOptions } from './definitions';
+import type { BraintreePlugin, DropInOptions, DropInResult, DropInToken, DataCollectorOptions, RecentMethod, AppleGoogleOptions, TicketOptions, LogOptions } from './definitions';
 export declare class BraintreeWeb extends WebPlugin implements BraintreePlugin {
     setToken(options: DropInToken): Promise<any>;
     showDropIn(options: DropInOptions): Promise<DropInResult>;
@@ -7,4 +7,5 @@ export declare class BraintreeWeb extends WebPlugin implements BraintreePlugin {
     getRecentMethods(options: DropInToken): Promise<RecentMethod>;
     showApplePay(options: AppleGoogleOptions): Promise<DropInResult>;
     getTickets(options: TicketOptions): Promise<any>;
+    log(options: LogOptions): Promise<any>;
 }

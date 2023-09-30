@@ -40,6 +40,7 @@ import org.json.JSONException;
         name = "Braintree"
 )
 public class BraintreePlugin extends Plugin implements DropInListener {
+   private static final String TAG = "BraintreePlugin";
    private String clientToken;
    private BraintreeClientTokenProvider clientTokenProvider;
 
@@ -247,8 +248,9 @@ public class BraintreePlugin extends Plugin implements DropInListener {
                             .build());
             googlePaymentRequest.setBillingAddressRequired(true);
             //googlePaymentRequest.setGoogleMerchantId(call.getString("googleMerchantId")); ///??? deprecated
-//            dropInRequest.setGooglePayRequest(googlePaymentRequest);
-            dropInRequest.setGooglePayDisabled(true);
+            dropInRequest.setGooglePayRequest(googlePaymentRequest);
+            dropInRequest.setGooglePayDisabled(false);
+//            dropInRequest.setGooglePayDisabled(true);
 
 //            Log.d(PLUGIN_TAG, "showDropIn started...");
             dropInClient.launchDropIn(dropInRequest);
@@ -388,6 +390,13 @@ public class BraintreePlugin extends Plugin implements DropInListener {
 
 //        Log.d(PLUGIN_TAG, "handleNonce, resultMap: " + resultMap.toString());
         return resultMap;
+    }
+
+    @PluginMethod()
+    public void log(PluginCall call) {
+        String text = call.getString("text");
+        Log.d(TAG, text);
+        call.resolve();
     }
 
     @Override

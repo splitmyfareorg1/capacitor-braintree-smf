@@ -120,6 +120,7 @@ if (!payment.cancelled || !payment.nonce) {
 * [`getRecentMethods(...)`](#getrecentmethods)
 * [`showApplePay(...)`](#showapplepay)
 * [`getTickets(...)`](#gettickets)
+* [`log(...)`](#log)
 * [Interfaces](#interfaces)
 
 </docgen-index>
@@ -211,6 +212,21 @@ getTickets(options: TicketOptions) => any
 | Param         | Type                                                    |
 | ------------- | ------------------------------------------------------- |
 | **`options`** | <code><a href="#ticketoptions">TicketOptions</a></code> |
+
+**Returns:** <code>any</code>
+
+--------------------
+
+
+### log(...)
+
+```typescript
+log(options: LogOptions) => any
+```
+
+| Param         | Type                                              |
+| ------------- | ------------------------------------------------- |
+| **`options`** | <code><a href="#logoptions">LogOptions</a></code> |
 
 **Returns:** <code>any</code>
 
@@ -329,6 +345,13 @@ getTickets(options: TicketOptions) => any
 | Prop           | Type                |
 | -------------- | ------------------- |
 | **`download`** | <code>string</code> |
+
+
+#### LogOptions
+
+| Prop       | Type                |
+| ---------- | ------------------- |
+| **`text`** | <code>string</code> |
 
 </docgen-api>
 

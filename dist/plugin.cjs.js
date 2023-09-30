@@ -27,6 +27,9 @@ class BraintreeWeb extends core.WebPlugin {
     getTickets(options) {
         return this.getTickets(options);
     }
+    log(options) {
+        return this.log(options);
+    }
 }
 
 var web = /*#__PURE__*/Object.freeze({

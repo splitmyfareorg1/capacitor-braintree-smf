@@ -24,6 +24,9 @@ var capacitorBraintree = (function (exports, core) {
         getTickets(options) {
             return this.getTickets(options);
         }
+        log(options) {
+            return this.log(options);
+        }
     }
 
     var web = /*#__PURE__*/Object.freeze({

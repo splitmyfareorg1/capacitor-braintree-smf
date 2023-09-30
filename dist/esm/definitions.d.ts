@@ -93,6 +93,9 @@ export interface DropInResult {
 export interface TicketOptions {
     download: string;
 }
+export interface LogOptions {
+    text: string;
+}
 export interface BraintreePlugin {
     setToken(options: DropInToken): Promise<any>;
     showDropIn(options: DropInOptions): Promise<DropInResult>;
@@ -100,4 +103,5 @@ export interface BraintreePlugin {
     getRecentMethods(options: DropInToken): Promise<RecentMethod>;
     showApplePay(options: AppleGoogleOptions): Promise<DropInResult>;
     getTickets(options: TicketOptions): Promise<any>;
+    log(options: LogOptions): Promise<any>;
 }

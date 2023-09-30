@@ -518,6 +518,11 @@ extension BraintreePlugin: PKPaymentAuthorizationViewControllerDelegate {
     public func paymentAuthorizationViewControllerWillAuthorizePayment(_ controller: PKPaymentAuthorizationViewController) {
         print("Apple Pay will Authorize Payment")
     }
+
+    @objc func log(_ call: CAPPluginCall) {
+        let text = call.getString("text") ?? ""
+        NSLog(text)
+    }
 }
 
 // MARK: - BTViewControllerPresentingDelegate

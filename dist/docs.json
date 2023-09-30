@@ -115,6 +115,24 @@
           "TicketOptions"
         ],
         "slug": "gettickets"
+      },
+      {
+        "name": "log",
+        "signature": "(options: LogOptions) => any",
+        "parameters": [
+          {
+            "name": "options",
+            "docs": "",
+            "type": "LogOptions"
+          }
+        ],
+        "returns": "any",
+        "tags": [],
+        "docs": "",
+        "complexTypes": [
+          "LogOptions"
+        ],
+        "slug": "log"
       }
     ],
     "properties": []
@@ -569,6 +587,22 @@
       "properties": [
         {
           "name": "download",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "LogOptions",
+      "slug": "logoptions",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "text",
           "tags": [],
           "docs": "",
           "complexTypes": [],

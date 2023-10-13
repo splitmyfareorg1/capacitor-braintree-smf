@@ -33,6 +33,7 @@ public class BraintreePlugin: CAPPlugin {
     var applePaymentMethod: BTPaymentMethodNonce!
     var applePayError: String!
     var applePaySuccess: Bool?
+    var successPayment: PKPayment?
 
     /**
      * Get device date
@@ -247,6 +248,8 @@ public class BraintreePlugin: CAPPlugin {
                     paymentRequest.currencyCode = call.getString("currencyCode") ?? "GBP"
                     paymentRequest.countryCode = call.getString("countryCodeAlpha2") ?? "GB"
                     paymentRequest.merchantIdentifier = call.getString("appleMerchantId") ?? ""
+                    paymentRequest.requiredBillingContactFields = [.name, .postalAddress]
+                    paymentRequest.requiredShippingContactFields = [.emailAddress, .phoneNumber]
 
                     guard let applePayController = PKPaymentAuthorizationViewController(paymentRequest: paymentRequest) else {
                         print("Unable to initialize PKPaymentAuthorizationViewController for Apple Pay")
@@ -421,11 +424,32 @@ public class BraintreePlugin: CAPPlugin {
         response["type"] = paymentMethodNonce.type
         response["deviceData"] = PPDataCollector.collectPayPalDeviceData()
         response["localizedDescription"] = paymentMethodNonce.description
-//        var applePayNonce: BTApplePayCardNonce = paymentMethodNonce as! BTApplePayCardNonce;
-        response["applePay"] = [
-//            "username": venmoAccountNonce.username
-//            applePayNonce
-        ]
+        if let payment = self.successPayment {
+            if let billingPostalAddress = payment.billingContact?.postalAddress {
+                response["applePay"] = [
+                    "billingContact": [
+                        "addressLines": [
+                            billingPostalAddress.street
+                        ],
+                        "administrativeArea": billingPostalAddress.state,
+                        "country": billingPostalAddress.country,
+                        "countryCode": billingPostalAddress.isoCountryCode,
+                        "familyName": payment.billingContact?.name?.familyName,
+                        "givenName": payment.billingContact?.name?.givenName,
+                        "locality": billingPostalAddress.city,
+                        "postalCode": billingPostalAddress.postalCode,
+                        "subAdministrativeArea": billingPostalAddress.subAdministrativeArea,
+                        "subLocality": billingPostalAddress.subLocality
+                    ],
+                    "shippingContact": [
+                        "familyName": payment.shippingContact?.name?.familyName,
+                        "givenName": payment.shippingContact?.name?.givenName,
+                        "phoneNumber": payment.shippingContact?.phoneNumber?.stringValue,
+                        "emailAddress": payment.shippingContact?.emailAddress
+                    ]
+                ]
+            }
+        }
         if let callID = self.showCallID, let call = self.bridge?.savedCall(withID: callID) {
             call.resolve(response);
             self.bridge?.releaseCall(call)
@@ -474,6 +498,7 @@ extension BraintreePlugin: PKPaymentAuthorizationViewControllerDelegate {
 //            self.completionBlock?(paymentMethod)
             self.applePaymentMethod = tokenizedPaymentMethod;
             self.applePaySuccess = true;
+            self.successPayment = payment;
             completion(PKPaymentAuthorizationResult(status: .success, errors: nil))
 //            self.resolveApplePaySuccess(paymentMethodNonce: paymentMethod)
         }

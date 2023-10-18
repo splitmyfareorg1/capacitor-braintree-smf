@@ -3,7 +3,6 @@ ext {
     androidxAppCompatVersion = project.hasProperty('androidxAppCompatVersion') ? rootProject.ext.androidxAppCompatVersion : '1.2.0'
     androidxJunitVersion = project.hasProperty('androidxJunitVersion') ? rootProject.ext.androidxJunitVersion : '1.1.2'
     androidxEspressoCoreVersion = project.hasProperty('androidxEspressoCoreVersion') ? rootProject.ext.androidxEspressoCoreVersion : '3.3.0'
-    brainTreeVersion = project.hasProperty('brainTreeVersion') ? rootProject.ext.brainTreeVersion : '4.38.2'
 }
 
 buildscript {
@@ -60,25 +59,16 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation project(':capacitor-android')
     implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
-
-
-    implementation "com.braintreepayments.api:paypal:$brainTreeVersion"
-    implementation "com.braintreepayments.api:google-pay:$brainTreeVersion"
-    implementation "com.braintreepayments.api:venmo:$brainTreeVersion"
-    implementation "com.braintreepayments.api:three-d-secure:$brainTreeVersion"
-
-
+    implementation 'com.braintreepayments.api:braintree:3.21.1'
     implementation 'com.google.android.gms:play-services-wallet:16.0.1'
-
-
-
+    implementation 'com.braintreepayments.api:three-d-secure:3.21.1'
     implementation 'com.braintreepayments:card-form:5.4.0'
-    implementation 'com.braintreepayments.api:drop-in:6.13.0'
-
-//    implementation ('com.braintreepayments.api:drop-in:6.13.0') {
-//        transitive = false
-//    }
-    implementation 'com.braintreepayments.api:data-collector:4.+'
+    implementation ('com.braintreepayments.api:drop-in:5.4.2') {
+        transitive = false
+    }
+    implementation 'com.braintreepayments.api:google-payment:3.5.0'
+    implementation 'com.google.android.gms:play-services-wallet:16.0.1'
+    implementation 'com.braintreepayments.api:data-collector:3.+'
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"

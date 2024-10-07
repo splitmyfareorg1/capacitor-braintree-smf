@@ -329,7 +329,7 @@ public class BraintreePlugin extends Plugin implements DropInListener, ThreeDSec
             innerMap.put("email", googlePayCardNonce.getEmail());
             innerMap.put("network", googlePayCardNonce.getCardType());
             innerMap.put("type", googlePayCardNonce.getCardType());
-            innerMap.put("token", threeDSCardNonce.toString());
+            innerMap.put("token", threeDSCardNonce != null ? threeDSCardNonce.toString() : null);
             innerMap.put("billingAddress", formatAddress(googlePayCardNonce.getBillingAddress()));
             innerMap.put("shippingAddress", formatAddress(googlePayCardNonce.getShippingAddress()));
 

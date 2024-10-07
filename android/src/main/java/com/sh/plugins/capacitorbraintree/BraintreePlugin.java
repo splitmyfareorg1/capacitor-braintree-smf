@@ -329,7 +329,8 @@ public class BraintreePlugin extends Plugin implements DropInListener, ThreeDSec
             innerMap.put("email", googlePayCardNonce.getEmail());
             innerMap.put("network", googlePayCardNonce.getCardType());
             innerMap.put("type", googlePayCardNonce.getCardType());
-            innerMap.put("token", threeDSCardNonce != null ? threeDSCardNonce.toString() : null);
+            //In network tokenized card case, no tokenized card information returned but this is a Raileasy's required field so I put the nonce here to test if it works
+            innerMap.put("token", threeDSCardNonce != null ? threeDSCardNonce.toString() : googlePayCardNonce.toString());
             innerMap.put("billingAddress", formatAddress(googlePayCardNonce.getBillingAddress()));
             innerMap.put("shippingAddress", formatAddress(googlePayCardNonce.getShippingAddress()));
 
